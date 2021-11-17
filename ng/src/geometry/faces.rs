@@ -57,10 +57,7 @@ impl Faces for fj::Shape {
 impl Faces for fj::Shape2d {
     fn triangles(&self, tolerance: f32) -> Vec<Triangle> {
         match self {
-            Self::Circle(_) => {
-                // TASK: Implement.
-                todo!()
-            }
+            Self::Circle(shape) => shape.triangles(tolerance),
             Self::Square(shape) => shape.triangles(tolerance),
         }
     }
@@ -71,6 +68,55 @@ impl Faces for fj::Shape3d {
         match self {
             Self::Sweep(shape) => shape.triangles(tolerance),
         }
+    }
+}
+
+impl Faces for fj::Circle {
+    fn triangles(&self, tolerance: f32) -> Vec<Triangle> {
+        // To approximate the circle, we use a regular polygon for which the
+        // circle is the circumscribed circle. The `tolerance` parameter is the
+        // maximum allowed distance between the polygon and the circle. This is
+        // the same as the difference between the circumscribed circle and the
+        // incircle.
+        //
+        // Let's figure which regular polygon we need to use, by just trying out
+        // some of them until we find one whose maximum error is less than or
+        // equal to the tolerance.
+        let mut n = 3;
+        loop {
+            let incircle_radius = self.radius * (PI / n as f32).cos();
+            let maximum_error = self.radius - incircle_radius;
+
+            if maximum_error <= tolerance {
+                break;
+            }
+
+            n += 1;
+        }
+
+        let mut vertices = Vec::new();
+        for i in 0..n {
+            let angle = 2. * PI / n as f32 * i as f32;
+
+            let (sin, cos) = angle.sin_cos();
+
+            let x = cos * self.radius;
+            let y = sin * self.radius;
+
+            circumference.push(Point2::new(x, y));
+        }
+
+        let mut vertices = Vec::new();
+
+        // let v = self.vertices();
+
+        // triangles.push([v[0], v[1], v[2]].into());
+        // triangles.push([v[0], v[2], v[3]].into());
+
+        // triangles
+
+        // TASK: Implement.
+        todo!()
     }
 }
 
