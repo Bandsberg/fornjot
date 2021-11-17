@@ -1,3 +1,8 @@
+// TASK: Reload model whenever it changes.
+// TASK: Add `egui`-based GUI. Use it to replace the current ad-hoc GUI.
+// TASK: Display model tree.
+// TASK: Make model tree clickable, display the part that has been clicked.
+
 mod args;
 mod geometry;
 mod graphics;
