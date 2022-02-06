@@ -590,10 +590,6 @@ dependencies = [
  "bytemuck",
  "clap",
  "decorum",
-<<<<<<< HEAD
-=======
- "delaunator",
->>>>>>> a1786a6e52c00a6cadae317c52a988d43c3455a2
  "faux",
  "fj",
  "futures",
