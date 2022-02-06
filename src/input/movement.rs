@@ -1,36 +1,8 @@
-use crate::{camera::Camera, math::Point};
-use cfg_if::cfg_if;
-#[cfg(test)]
-use mockall;
-use mockall_double;
+use crate::{camera::Camera, math::Point, window::Window};
 use nalgebra::distance;
 use winit::dpi::PhysicalPosition;
 
-//Setting up mock of Window / use window::Window
-//Måske bare mocke i window craten??? og importere den mock og bruge den.
-//Så tænker jeg namespace burde være correct.
-cfg_if! {
-
-    if #[cfg(test)] {
-        use mockall::*;
-        mock! {
-            pub Window{
-                fn height(&self) -> u32;
-                fn width(&self) -> u32;
-            }
-        }
-        use MockWindow as Window;
-
-    }
-
-    else {
-        use crate::window::Window;
-    }
-
-
-}
-
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Movement {
     focus_point: Option<Point<3>>,
     cursor: Option<PhysicalPosition<f64>>,
@@ -82,40 +54,38 @@ impl Movement {
         self.cursor = cursor;
     }
 }
-/*
-#[cfg(test)]
-mockall::mock! {pub Window{
-    fn height() -> u32;
-}}
-*/
-/*
-#[cfg(not(test))]
-use foo::Foo;
-#[cfg(test)]
-use foo::MockFoo as Foo;
-*/
-
-//#[double]
-//use Window::height;
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::{camera::Camera, math::Point};
-    use mockall;
-    use mockall_double::double;
-    use nalgebra::Vector3;
+    use faux::when;
+    use nalgebra::{Translation, Vector3};
     use parry3d_f64::bounding_volume::AABB;
     use winit::dpi::PhysicalPosition;
 
     #[test]
     fn test_new() {
-        let movement = Movement {
+        let expected_movement = Movement {
             focus_point: None,
             cursor: None,
         };
-        assert!(Movement::new() == movement);
+        assert!(Movement::new() == expected_movement);
+    }
+
+    #[test]
+    fn test_start() {
+        let mut movement = Movement::new();
+        let focus_point = Some(Point::origin());
+        let cursor = Some(PhysicalPosition::new(1.0, 1.0));
+        movement.start(focus_point, cursor);
+
+        let expected_movement = Movement {
+            focus_point: Some(Point::origin()),
+            cursor: Some(PhysicalPosition::new(1.0, 1.0)),
+        };
+
+        assert!(movement == expected_movement);
     }
 
     #[test]
@@ -128,37 +98,52 @@ mod tests {
         assert_eq!(movement.focus_point, None);
     }
 
-    //TODO
     #[test]
     fn test_apply() {
+        // Tests Movements "apply" method effect on Movement
+        // and translation in Camera
+
         //cursor
         let cursor: Option<PhysicalPosition<f64>> =
             Some(PhysicalPosition::new(1.0, 1.0));
 
-        //camera: &mut Camera,
-        //Camera: pub fn new(aabb: &AABB) -> Self
-        //aabb: pub fn new(mins: Point<Real>, maxs: Point<Real>) -> AABB
-        //Point:
+        //camera
         let min_point = Point::from(Vector3::new(1.0, 1.0, 1.0));
         let max_point = Point::from(Vector3::new(100.0, 100.0, 100.0));
         let aabb = AABB::new(min_point, max_point);
         let mut camera = Camera::new(&aabb);
 
-        //Window. Mock window for consitency(reproducability) and simplcity
-        //Use mockall_double and mockall, hopefully it will work :S
-        /*
-                mockall::mock! {
-                    pub Window{
-                        fn height(&self) -> u32;
-                        fn width(&self) -> u32;
-                    }
-                }
-                use MockWindow as Window;
-        */
-        let mut mock = MockWindow::new();
-        mock.expect_height().return_const(100u32);
+        //Window. Mock window for consitency(reproducability) and simplicity
 
-        let movement = Movement::new();
-        movement.apply(cursor, &mut camera, &mock);
+        let mut window = Window::faux();
+        when!(window.height()).then_return(100);
+        when!(window.width()).then_return(100);
+
+        let mut movement = Movement::new();
+        movement.start(
+            Some(Point::origin()),
+            Some(PhysicalPosition::new(100.0, 100.0)),
+        );
+        movement.apply(cursor, &mut camera, &window);
+
+        println!("movement: {:?}", movement);
+
+        let expected_movement = Movement {
+            focus_point: Some(Point::origin()),
+            cursor: Some(PhysicalPosition { x: 1.0, y: 1.0 }),
+        };
+        println!("expected_movement: {:?}", expected_movement);
+
+        assert!(movement == expected_movement);
+
+        //Expected trnaslation of camera. Used output of current test as it is fairly
+        //assumed to be the results that is currently desired.
+
+        let expected_translation = Translation::from([
+            -521.7068842052822,
+            420.70688420528217,
+            -400.4023513866121,
+        ]);
+        assert_eq!(camera.translation, expected_translation);
     }
 }

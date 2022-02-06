@@ -1,7 +1,11 @@
+#[cfg(test)]
+use faux;
 use winit::{event_loop::EventLoop, window::WindowBuilder};
 
+#[cfg_attr(test, faux::create)]
 pub struct Window(winit::window::Window);
 
+#[cfg_attr(test, faux::methods)]
 impl Window {
     pub fn new(event_loop: &EventLoop<()>) -> Self {
         let window = WindowBuilder::new()
