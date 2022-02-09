@@ -100,8 +100,8 @@ mod tests {
 
     #[test]
     fn test_apply() {
-        // Tests Movements "apply" method effect on Movement
-        // and translation in Camera
+        // Tests struct Movements "apply" method effect on Movement (self)
+        // and "translation" in struct Camera
 
         //cursor
         let cursor: Option<PhysicalPosition<f64>> =
